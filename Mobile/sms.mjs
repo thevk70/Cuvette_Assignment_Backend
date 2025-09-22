@@ -1,4 +1,3 @@
-import express from "express";
 import twilio from "twilio";
 import env from "dotenv";
 import bcrypt from "bcrypt";
@@ -20,7 +19,6 @@ const client = new twilio(accountSid, authToken);
 const sendOTPVerificationSMS = async (phoneNumber, _id) => {
   const otp = generateOtp();
   const salt = await bcrypt.genSalt(10);
-
   if (!phoneNumber) {
     return res.status(400).json({ error: "Phone number is required" });
   }
@@ -38,7 +36,6 @@ The Team`,
       to: phoneNumber,
     })
     .then(async (message) => {
-      console.log(`OTP sent: ${otp} (Message SID: ${message.sid})`);
       await UserOtpVerification.findOneAndUpdate(
         { _id: _id },
         {

@@ -17,8 +17,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/user",user_routes);
-app.use("/job",jobpost_routes);
+app.use("/user", user_routes);
+app.use("/job", jobpost_routes);
 
 const start = async () => {
   try {
@@ -27,7 +27,8 @@ const start = async () => {
     });
     await connectDB();
   } catch (error) {
-    console.error(error);const port = process.env.PORT;
+    console.error(error);
+    const port = process.env.PORT;
   }
 };
 

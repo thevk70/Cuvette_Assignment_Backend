@@ -41,7 +41,7 @@ const createEmailBody = (job) => {
 <html>
 <head>
   <style>
-    body {
+    body,html {
       font-family: Arial, sans-serif;
       color: #333;
       line-height: 1.6;
@@ -50,13 +50,14 @@ const createEmailBody = (job) => {
       background-color: #f4f4f4;
     }
     .container {
-      width: 100%;
       max-width: 600px;
       margin: 20px auto;
       background-color: #ffffff;
       padding: 20px;
       border: 1px solid #dddddd;
       border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     .header {
       padding-bottom: 20px;
@@ -135,7 +136,6 @@ const createEmailBody = (job) => {
 
 const sendJobEmail = async (jobData) => {
   const htmlBody = createEmailBody(jobData);
-  console.log(jobData);
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -153,7 +153,6 @@ const sendJobEmail = async (jobData) => {
   try {
     // Iterate over the candidate emails and send the email
     const emails = jobData.addCandidates;
-    console.log("emails: ", emails.length);
 
     for (let i = 0; i < emails.length; i++) {
       if (validateEmail(emails[i])) {
@@ -166,8 +165,7 @@ const sendJobEmail = async (jobData) => {
       }
     }
   } catch (error) {
-    console.error("Error sending emails:", error);
-    // res.status(500).json({ message: "Failed to send emails", error });
+    res.status(500).json({ message: "Failed to send emails", error,type:"error" });
   }
 };
 

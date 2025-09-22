@@ -14,14 +14,12 @@ const createJob = async (req, res) => {
     addCandidates,
     endDate
   });
-  console.log(job);
   
   try {
     const savedJob = await job.save().then(async () => await sendJobEmail(job))
-    res.status(201).json({ message: "Emails sent successfully!", savedJob });
+    res.status(201).json({ message: "Emails sent successfully!", savedJob,type:"success" });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error creating job", error });
+    res.status(500).json({ message: "Error creating job", type:"error" });
   }
 };
 

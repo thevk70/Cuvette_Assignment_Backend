@@ -20,8 +20,7 @@ const getUsers = async (req, res) => {
     const users = await User.find().exec(); // Find all users in the database
     res.status(200).json(users);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", type: "error" });
   }
 };
 
@@ -38,40 +37,47 @@ const createUser = async (req, res) => {
   let otpResponse;
 
   if (!validateEmail(req.body.companyEmail)) {
-    return res
-      .status(203)
-      .json({ message: "Please enter a valid email address." });
+    return res.status(203).json({
+      message: "Please enter a valid email address.",
+      type: "warning",
+    });
   }
 
   if (!validatePassword(req.body.password)) {
     return res.status(203).json({
       message:
         "Password must be at least 8 characters long and include uppercase letters, lowercase letters, digits, and special characters.",
+      type: "warning",
     });
   }
-  console.log(!validatePhoneNo(req.body.phoneNumber));
-  console.log(req.body.phoneNumber);
 
   if (!validatePhoneNo(req.body.phoneNumber)) {
-    return res
-      .status(203)
-      .json({ message: "Please enter a valid 10-digit phone number." });
+    return res.status(203).json({
+      message: "Please enter a valid 10-digit phone number.",
+      type: "warning",
+    });
   }
 
   if (!name || !companyEmail || !password || !confirmPassword) {
-    return res.status(203).json({ message: "All fields are required." });
+    return res
+      .status(203)
+      .json({ message: "All fields are required.", type: "warning" });
   }
 
   // Check if passwords match
   if (password !== confirmPassword) {
-    return res.status(203).json({ message: "Passwords do not match." });
+    return res
+      .status(203)
+      .json({ message: "Passwords do not match.", type: "warning" });
   }
 
   try {
     // Check if companyEmail is unique
     const existingUser = await User.findOne({ companyEmail });
     if (existingUser) {
-      return res.status(203).json({ message: "Email already exists." });
+      return res
+        .status(203)
+        .json({ message: "Email already exists.", type: "warning" });
     }
 
     // Create new user
@@ -84,7 +90,6 @@ const createUser = async (req, res) => {
       password: await bcrypt.hash(req.body.password, salt),
       confirmPassword: await bcrypt.hash(req.body.confirmPassword, salt),
     });
-    console.log(newUser);
 
     // Save user to DB
     await newUser.save().then(async () => {
@@ -103,8 +108,7 @@ const createUser = async (req, res) => {
     }, 600000);
     res.status(201).json({ message: "OTP Sent", otpResponse });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", type: "error" });
   }
 };
 
@@ -138,61 +142,87 @@ const verifyOTP = async (req, res) => {
                   isVerified: "true",
                 }
               );
-              res.status(200).json({ message: "OTP verified successfully" });
+              res.status(200).json({
+                message: "OTP verified successfully",
+                type: "success",
+              });
             });
           } else {
-            res.status(203).json({ message: "Invalid Email OTP" });
+            res
+              .status(203)
+              .json({ message: "Invalid Email OTP", type: "warning" });
           }
         } else {
-          res.status(203).json({ message: "Invalid Mobile OTP" });
+          res
+            .status(203)
+            .json({ message: "Invalid Mobile OTP", type: "warning" });
         }
       } else {
-        return res.status(203).json({ message: "OTP has expired" });
+        return res
+          .status(203)
+          .json({ message: "OTP has expired", type: "error" });
       }
     } else {
-      res
-        .status(203)
-        .json({ message: "Something went wrong OTP not generated." });
+      res.status(203).json({
+        message: "Something went wrong OTP not generated.",
+        type: "error",
+      });
     }
   } else {
-    res.status(203).json({ message: "Please enter six digit OTP" });
+    res
+      .status(203)
+      .json({ message: "Please enter six digit OTP", type: "warning" });
   }
 };
 
 const loginUser = async (req, res) => {
   const { companyEmail, password } = req.body;
+
+  if (!validateEmail(companyEmail)) {
+    return res.status(203).json({
+      message: "Please enter a valid email address.",
+      type: "warning",
+    });
+  }
+
+  if (!validatePassword(password)) {
+    return res.status(203).json({
+      message:
+        "Password must be at least 8 characters long and include uppercase letters, lowercase letters, digits, and special characters.",
+      type: "warning",
+    });
+  }
   const user = await User.find({ companyEmail });
   if (user) {
     if (!validatePassword(req.body.password)) {
       return res.status(203).json({
         message:
           "Password must be at least 8 characters long and include uppercase letters, lowercase letters, digits, and special characters.",
+        type: "warning",
       });
     }
+
     const isMatch = await bcrypt.compare(password, user[0].password);
     if (isMatch) {
       const tokenString = jwt.sign(
         { _id: user[0]._id.toString(), email: user[0].companyEmail },
         process.env.SECRET_KEY,
-        { expiresIn: "1h" }
+        { expiresIn: "5m" }
       );
       const options = {
-        expires: new Date(Date.now() + 60 * 1000),
+        expires: new Date(Date.now() + 5 * 60 * 1000),
         httpOnly: true,
       };
       res.status(200).cookie("token", tokenString, options).json({
         message: "Logged in successfully",
         token: tokenString,
+        type: "success",
       });
-      // res.status(200).json({
-      //   token: tokenString,
-      //   message: "success",
-      // });
     } else {
-      res.status(203).json({ message: "Incorrect Password." });
+      res.status(203).json({ message: "Incorrect Password.", type: "error" });
     }
   } else {
-    res.status(203).json({ message: "Invalid Email." });
+    res.status(203).json({ message: "Invalid Email.", type: "error"  });
   }
 };
 
@@ -200,10 +230,9 @@ const authoriseLoginUser = async (req, res) => {
   const token = req.cookies.token;
   if (token) {
     const user = jwtDecode(token);
-    console.log(user);
-    res.status(200).json({ message: "Welcome" });
+    res.status(200).json({ message: "Welcome", type: "success" });
   } else {
-    res.status(203).json({ message: "Token Expired" });
+    res.status(203).json({ message: "Token Expired", type: "error" });
   }
 };
 
