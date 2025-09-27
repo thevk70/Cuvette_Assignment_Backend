@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import user_routes from "./routes/user.mjs";
 import jobpost_routes from "./routes/job.mjs";
+import payment_routes from "./routes/payment.mjs";
 env.config();
 const port = process.env.PORT;
 const app = express();
@@ -19,6 +20,7 @@ app.use(cookieParser());
 
 app.use("/user", user_routes);
 app.use("/job", jobpost_routes);
+app.use("/payment",payment_routes);
 
 const start = async () => {
   try {
